@@ -1,6 +1,11 @@
 package internal
 
-import "github.com/gin-gonic/gin"
+import (
+	"fmt"
+	"net/http"
+
+	"github.com/gin-gonic/gin"
+)
 
 func CORS() gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -14,6 +19,18 @@ func CORS() gin.HandlerFunc {
 			c.AbortWithStatus(204)
 			return
 		}
+		c.Next()
+	}
+}
+
+func WithCustomRecovery() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		defer func() {
+			if err := recover(); err != nil {
+				_ = c.Error(fmt.Errorf("[recovered] panic: %v", err))
+				c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"Error": "Internal Server Error"})
+			}
+		}()
 		c.Next()
 	}
 }
